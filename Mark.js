@@ -9,7 +9,20 @@ export default class Mark extends Element{
                 y:0
              };
         }
-
+        if(!this.img){
+            let imageObj = new Image();
+            imageObj.src = this.imgurl;
+            this.img = imageObj;
+        }
+        Object.defineProperty(this,'imgurl',{
+            set:function(newValue){
+                let imageObj = new Image();
+                imageObj.src = newValue;
+                this.img = imageObj;
+            }
+        })
+        this._width = this.width;
+        this._height = this.height;
         this.addText = this.addText.bind(this);
         this.clearText = this.clearText.bind(this);
         this.addMark = this.addMark.bind(this);

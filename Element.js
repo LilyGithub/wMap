@@ -7,6 +7,7 @@ export default class Element{
             marginLeft:0,
             width:1,
             height:1,
+            Zindex:0,
             sort:"",
             attr:{}
         };

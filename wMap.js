@@ -18,6 +18,9 @@ export default class WMap extends React.Component{
             defUnitx:{},
             tool:Tool,
             fps:100, //帧率
+            mimZoom:10,
+            maxZoom:1000,
+            zoomRate:5,
             ox:0,
             oy:0
         }
@@ -72,6 +75,9 @@ export default class WMap extends React.Component{
         this.zoomIn = this.zoomIn.bind(this);
         this.zoomOut = this.zoomOut.bind(this);
         this.bindZoomEvent = this.bindZoomEvent.bind(this);
+        this.addBubble = this.addBubble.bind(this);
+        this._getBubblePosition = this._getBubblePosition.bind(this);
+        this._updateBubble = this._updateBubble.bind(this);
     }
     _transRealXY2XY(pt){ //实际坐标转为网页坐标
         let unit = this.unit;
@@ -97,6 +103,15 @@ export default class WMap extends React.Component{
         vP.h = vh;
         return vP;
     };
+    _getBubblePosition(bb){
+        let unit = this.unit;
+        let vP = {};
+        let vx = bb.x*unit.x;
+        let vy = bb.y*unit.y;
+        vP.y = this.oy - vy - bb.ox;
+        vP.x = this.ox + vx - bb.oy;
+        return vP;
+    };
     _drawMark(mark){
         let context2d = this.context2d;
         let hpt = this._transRealXY2XY(mark);
@@ -110,7 +125,7 @@ export default class WMap extends React.Component{
                     context2d.fillStyle = imgContext;
                     context2d.fillRect(mark.htmlX,mark.htmlY,mark.width,mark.height);
                 }else{
-                    context2d.drawImage(img,mark.imgStart.x,mark.imgStart.y,mark.width,mark.height,mark.htmlX,mark.htmlY,mark.width,mark.height);
+                    context2d.drawImage(img,mark.imgStart.x,mark.imgStart.y,img.width,img.height,mark.htmlX,mark.htmlY,mark.width,mark.height);
                 }
                 //文本信息
                 if(mark.text){
@@ -237,6 +252,13 @@ export default class WMap extends React.Component{
         }
         return layer;
     };
+    _updateBubble(bb){
+        let pos = this._getBubblePosition(bb);
+        let divDom = bb.dom;
+        divDom.style.left = pos.x+"px";
+        divDom.style.top = pos.y+"px";
+        return bb;
+    }
     setXYZfps(f){
         this.fps = 1000/f;
         ____wMap_fps = this.fps;
@@ -290,6 +312,28 @@ export default class WMap extends React.Component{
         }
         //allElements.push(mark);
     };
+    addBubble(opt){
+        let defaultopt = {
+            ox:0,
+            oy:0,
+            x:0,
+            y:0,
+            width:100,
+            height:100,
+            content:"",
+            Zindex:99999,
+            id:""
+        };
+        let pos = this._getBubblePosition(opt);
+        opt.type = "bubble";
+        let divbox = document.createElement("div");
+        divbox.style.cssText = "height:"+opt.height+"px; width:"+opt.width+"px; top:"+pos.y+"px; left:"+pos.x+"px";
+        divbox.style.position = "absolute";
+        divbox.innerHTML = opt.content;
+        this.boxDiv.append(divbox);
+        opt.dom = divbox;
+        this.elements[opt.id] = opt;
+    };
     removeElement(mark) {
         let elements = this.elements;
         if (mark.id) {
@@ -342,12 +386,18 @@ export default class WMap extends React.Component{
         this.changeScaleY(scale);
     };
     zoomIn(){
-        this.scale -= 10;
+        if(this.scale<this.minZoom){
+            return;
+        }
+        this.scale -= this.zoomRate;
         this.changeScaleX(this.scale);
         this.changeScaleY(this.scale);
     }
     zoomOut(){
-        this.scale += 10;
+        if(this.scale>this.maxZoom){
+            return;
+        }
+        this.scale += this.zoomRate;
         this.changeScaleX(this.scale);
         this.changeScaleY(this.scale);
     }
@@ -356,11 +406,16 @@ export default class WMap extends React.Component{
         let elements = this.elements;
         if(!context2d)return;
         context2d.clearRect(0, 0, this.canvas.clientWidth, this.canvas.clientHeight);
-        for(let i in elements){
-            let el = elements[i];
+        let sortedElementKeys = Object.keys(elements).sort(function(a, b) {
+            return elements[a].Zindex - elements[b].Zindex;
+        });
+        for(let i=0; i<sortedElementKeys.length; i++){
+            let key = sortedElementKeys[i];
+            let el = elements[key];
             switch(el.type){
                 case "mark":this._drawMark.call(this,el);break;
                 case "layer": this._drawLayer(el);break;
+                case "bubble": this._updateBubble(el);break;
             }
         }
     };
@@ -389,9 +444,9 @@ export default class WMap extends React.Component{
 			for(let i in elements){
 				let el = elements[i];
 				if( el&&function(){
-					if( x<(el.htmlX+el.width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el.height)){
+					if( x<(el.htmlX+el._width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el._height)){
 						el.eventX = x/unit.x;
-						el.eventY = height - y/unit.y;
+						el.eventY = el._height - y/unit.y;
 						return el.click?el.click()==false:false;
 					}
 					return false;
@@ -433,11 +488,11 @@ export default class WMap extends React.Component{
                     let hoverc = false;
                     let leavec = false;
                     if( el&&function(){
-                        if( !hoverc && x<(el.htmlX+el.width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el.height)){
+                        if( !hoverc && x<(el.htmlX+el._width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el._height)){
                             hoverc = ( el.hover()==false );  //事件冒泡。
                         }
                         //if(el.hovering)console.log(x+", "+el.htmlX);
-                        if( !leavec && ( x>(el.htmlX+el.width) || x<=el.htmlX || y<=el.htmlY || y>(el.htmlY+el.height) ) ){
+                        if( !leavec && ( x>(el.htmlX+el._width) || x<=el.htmlX || y<=el.htmlY || y>(el.htmlY+el._height) ) ){
                             if(el.hovering) {
                                 leavec = ( el.leave()==false );  //事件冒泡。
                             }
@@ -456,9 +511,9 @@ export default class WMap extends React.Component{
 			for(let i in elements){
 				let el = elements[i];
 				if( el&&function(){
-					if( x<(el.htmlX+el.width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el.height)){
+					if( x<(el.htmlX+el._width) && x>el.htmlX && y>el.htmlY && y<(el.htmlY+el._height)){
 						el.eventX = x/unit.x;
-						el.eventY = height - y/unit.y;
+						el.eventY = el._height - y/unit.y;
 						return el.dblClick()==false;  //事件冒泡。
 					}
 					return false;
@@ -491,7 +546,7 @@ export default class WMap extends React.Component{
 
     render() {
         return (
-          <div width={this.props.width+"px"} height={this.props.height+"px"} ref="myDiv">
+          <div width={this.props.width+"px"} height={this.props.height+"px"} ref={el => {this.boxDiv = el}}>
             <canvas width={this.props.width} height={this.props.height} ref={el => {this.canvas = el}}></canvas>
           </div>
         );

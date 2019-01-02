@@ -11,7 +11,18 @@ export default class Layer extends Element{
                 y:0
              };
         }
-
+        if(!this.img){
+            let imageObj = new Image();
+            imageObj.src = this.imgurl;
+            this.img = imageObj;
+        }
+        Object.defineProperty(this,'imgurl',{
+            set:function(newValue){
+                let imageObj = new Image();
+                imageObj.src = newValue;
+                this.img = imageObj;
+            }
+        })
         this.addText = this.addText.bind(this);
     }
     

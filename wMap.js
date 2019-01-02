@@ -78,6 +78,7 @@ export default class WMap extends React.Component{
         this.addBubble = this.addBubble.bind(this);
         this._getBubblePosition = this._getBubblePosition.bind(this);
         this._updateBubble = this._updateBubble.bind(this);
+        this._transXY2RealXY = this._transXY2RealXY.bind(this);
     }
     _transRealXY2XY(pt){ //实际坐标转为网页坐标
         let unit = this.unit;
@@ -88,6 +89,15 @@ export default class WMap extends React.Component{
         let vh = pt.height?pt.height:0;
         vP.y = this.oy - vy - vh/2;
         vP.x = this.ox + vx - vw/2;
+        return vP;
+    };
+    _transXY2RealXY(x,y){ //网页像素转实际坐标
+        let unit = this.unit;
+        let vP = {};
+        let vy = (this.oy-y)/unit.y;
+        let vx = (x-this.ox)/unit.x;
+        vP.y = vy;
+        vP.x = vx;
         return vP;
     };
     _transRealXYWH2XYWH(pt){ //实际坐标转为网页坐标
@@ -276,7 +286,7 @@ export default class WMap extends React.Component{
         //TODO
     };
     click(func) {
-        clickFunc = func;
+        this.clickFunc = func;
     };
     bindZoomEvent(flag,func1,func2){
         this.zoomFlag= flag;
@@ -436,11 +446,12 @@ export default class WMap extends React.Component{
         let canvas = _thisMap.canvas;
         let elements = _thisMap.elements;
         canvas.onclick=function(e){
-            if(_thisMap.clickFunc)_thisMap.clickFunc();
+            let x = e.offsetX;
+			let y = e.offsetY;
+            var mapEvnet = _thisMap._transXY2RealXY(x,y);
+            if(_thisMap.clickFunc)_thisMap.clickFunc(mapEvnet);
             let elements = _thisMap.elements;
             let unit = _thisMap.unit;
-			let x = e.offsetX;
-			let y = e.offsetY;
 			for(let i in elements){
 				let el = elements[i];
 				if( el&&function(){
@@ -451,7 +462,7 @@ export default class WMap extends React.Component{
 					}
 					return false;
 				}() ) return;
-			}
+            }
         };
         canvas.onmousedown = function(e){
             let x = e.offsetX;

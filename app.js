@@ -35,6 +35,32 @@ export class App extends React.Component{
             backgroundRepeat:false
         });
         wMap.addElement(layer);
+        wMap.click(function(e){
+            let box = new Layer({
+                id:"box"+e.x+e.y,
+                x:e.x,
+                y:e.y,
+                width:10,
+                height:20,
+                Zindex:101,
+                imgurl:image_a1,
+                attr:{
+                    status:0,
+                    image1:image_a1,
+                    image2:image_a1a
+                }
+            });
+            wMap.addElement(box);
+            box.click(function(){
+                if(this.attr.status==0){
+                    this.imgurl = this.attr.image2;
+                    this.attr.status=1;
+                }else{
+                    this.imgurl = this.attr.image1;
+                    this.attr.status=0;
+                }
+            });
+        });
 
         let mark = new Mark({
             id:"mark1",

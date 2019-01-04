@@ -6,6 +6,7 @@
 项目启动：
 在项目目录下依次执行
  npm install
+ 
  npm run dev
 
 
@@ -24,12 +25,21 @@ wMap 使用简介（具体可参考使用帮助手册）
    import WMap, {Mark,Layer,Text,Bubble} from './js/react-wMap/wMap.js';
    
    render() {
+   
            return (
-               <WMap width={document.body.clientWidth} height={document.body.clientHeight} virtualHeight="1000" virtualWidth="1000" oy="931" fps="10" minZoom="10" maxZoom="1000" onload={this.onload} />
+           
+               <WMap width={document.body.clientWidth} height={document.body.clientHeight} virtualHeight="1000" virtualWidth="1000" 
+               
+               oy="931" fps="10" minZoom="10" maxZoom="1000" onload={this.onload} />
+               
            );
+           
    }
+   
    onload(){
+   
       //your Code
+      
    }
 
  

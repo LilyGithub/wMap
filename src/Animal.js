@@ -1,5 +1,5 @@
 
-export const Animal = function(m){ 5
+export const Animal = function(m){
     this.mark = m;
     this.start = function(){
         let mark = this.mark;

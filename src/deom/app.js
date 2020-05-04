@@ -1,7 +1,6 @@
-import { DatePicker } from 'antd';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
-import WMap, {Mark,Layer,Text} from './js/react-wMap/wMap.js';
+import WMap, {Mark,Layer,Text} from '../wMap.js';
 
 let bgImage = require("./images/bg.png");
 

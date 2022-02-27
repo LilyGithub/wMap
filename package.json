@@ -23,7 +23,7 @@
     "react-redux": "^7.1.1",
     "redux": "^4.0.4",
     "store": "^2.0.12",
-    "url-parse": "^1.1.9",
+    "url-parse": "^1.5.8",
     "uuid-js": "^0.7.5"
   },
   "devDependencies": {
